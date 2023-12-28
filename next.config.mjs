@@ -17,6 +17,9 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
+  env:{
+    cdn: "https://s3.tech.nisit.ku.ac.th/assets/ku-luv"
+  }
 };
 
 export default config;
