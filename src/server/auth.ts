@@ -1,9 +1,9 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { type GetServerSidePropsContext } from "next";
 import {
-  getServerSession,
-  type DefaultSession,
-  type NextAuthOptions,
+    getServerSession,
+    type DefaultSession,
+    type NextAuthOptions,
 } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
@@ -17,18 +17,18 @@ import { db } from "@/server/db";
  * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
  */
 declare module "next-auth" {
-  interface Session extends DefaultSession {
-    user: DefaultSession["user"] & {
-      id: string;
-      // ...other properties
-      // role: UserRole;
-    };
-  }
+    interface Session extends DefaultSession {
+        user: DefaultSession["user"] & {
+            id: string;
+            // ...other properties
+            // role: UserRole;
+        };
+    }
 
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+    // interface User {
+    //   // ...other properties
+    //   // role: UserRole;
+    // }
 }
 
 /**
@@ -37,27 +37,67 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
-  callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-    }),
-  },
-  adapter: PrismaAdapter(db),
-  providers: [
-    GoogleProvider({
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-    }),
-    /**
-     * ...add more providers here.
-     *
-     * Most other providers require a bit more work than the Discord provider. For example, the
-     * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-     * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-     *
-     * @see https://next-auth.js.org/providers/github
-     */
-  ],
+    session: {
+        strategy: "jwt",
+    },
+    callbacks: {
+        async session({ session, token }) {
+            // if (session.user && token.sub) {
+            //     session.user.id = token.sub;
+            //     session.user.isAdmin = token.isAdmin;
+            //     session.user.owner = token.owner;
+            //     session.user.editor = token.editor;
+            // }
+            console.log("token", token);
+            
+            return session;
+        },
+        async jwt({ token }) {
+            // const userData = await prisma.user.findUnique({
+            //   where: {
+            //     email: token.email!,
+            //   },
+            //   include: {
+            //     myClubs: true,
+            //     editor: true,
+            //   },
+            // });
+
+            // if (userData === null) {
+            //   return {
+            //     ...token,
+            //   };
+            // }
+
+            return {
+                //   ...{
+                //     ...userData,
+                //     owner: userData.myClubs.map((club) => club.id),
+                //     editor: userData.editor.map((club) => club.id),
+                //   },
+                ...token,
+            };
+        },
+    },
+    pages: {
+        signIn: "/sign-in",
+    },
+    adapter: PrismaAdapter(db),
+    providers: [
+        GoogleProvider({
+            clientId: env.GOOGLE_CLIENT_ID,
+            clientSecret: env.GOOGLE_CLIENT_SECRET,
+        }),
+        /**
+         * ...add more providers here.
+         *
+         * Most other providers require a bit more work than the Discord provider. For example, the
+         * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
+         * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
+         *
+         * @see https://next-auth.js.org/providers/github
+         */
+    ],
 };
 
 /**
@@ -66,8 +106,8 @@ export const authOptions: NextAuthOptions = {
  * @see https://next-auth.js.org/configuration/nextjs
  */
 export const getServerAuthSession = (ctx: {
-  req: GetServerSidePropsContext["req"];
-  res: GetServerSidePropsContext["res"];
+    req: GetServerSidePropsContext["req"];
+    res: GetServerSidePropsContext["res"];
 }) => {
-  return getServerSession(ctx.req, ctx.res, authOptions);
+    return getServerSession(ctx.req, ctx.res, authOptions);
 };
